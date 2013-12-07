@@ -11,7 +11,7 @@ You Need OpenCL 1.2 to run and compile the the code in this repository. For Nvid
 This code was tested using an Nvidia graphics card (GT555m) on a 64bit linux Machine with the latest Nvidia 331 drivers.
 
 For those of you who are having difficulty setting up OpenCL on linux with optimus enabled graphics cards, see
-[this post on stack overflow](http://stackoverflow.com/questions/20335579/error-clgetplatformids-1001-when-running-opencl-code-linux/) which should cover all the problems you had (which I had to deal with too).
+[this post on stack overflow](http://stackoverflow.com/questions/20335579/error-clgetplatformids-1001-when-running-opencl-code-linux/) which should cover all the problems you have (which I had to deal with too). Feel free to comment on the post if you are still having trouble getting it to work.
 
 Compiling
 ---------
