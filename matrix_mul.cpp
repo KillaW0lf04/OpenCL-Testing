@@ -28,14 +28,7 @@ void h_matrixmul(vector<double> A, vector<double> B, vector<double> C) {
 	}
 }
 
-//char* err_code(cl_int);
-
-// We Will be calculating the equation A = B * C
-
-int main(int argc, char *argv[]) {
-
-	printf("Starting...\n");
-
+void d_matrixmul(vector<double> A, vector<double> B, vector<double> C) {
 	Context context(CL_DEVICE_TYPE_DEFAULT);
 
 	vector<Device> devices = context.getInfo<CL_CONTEXT_DEVICES>();
@@ -46,49 +39,22 @@ int main(int argc, char *argv[]) {
 		program.build();
 		auto mmul = cl::make_kernel<int, Buffer, Buffer, Buffer>(program, "matrixmul");
 
-		// We will be calculating calculations of square NxN matrices
-		vector<double> A(N * N);
-		vector<double> B(N * N);
-		vector<double> C(N * N);
-
 		// Use the Draconion naming convention of d_* for declaring device memory
 		Buffer d_A, d_B, d_C;
-
-		// Initialise Matrices with random data
-		for(int i=0; i < N * N; ++i)
-		{
-			B[i] = rand() % 100;
-			C[i] = rand() % 100;
-		}
-
-		util::Timer timer;
-		double rtime;
-
-		timer.reset();
-		printf("Performing matrix multiply on the host...\n");
-		h_matrixmul(A, B, C);
-		rtime = static_cast<double>(timer.getTimeMilliseconds() / 1000.0);		
-		printf("Host computation complete in %f seconds\n", rtime);
 
 		d_A = Buffer(context, CL_MEM_WRITE_ONLY, sizeof(float) * N * N);
 		d_B = Buffer(context, begin(B), end(B), true);
 		d_C = Buffer(context, begin(C), end(C), true);
 
 		printf("Launching Kernel!\n");
-		timer.reset();
 
 		// Launch the specified kernel with the specified dimensions and arguments
 		mmul(EnqueueArgs(queue, NDRange(N), NDRange(64)), N, d_A, d_B, d_C);
 
 		queue.finish();
 
-		rtime = static_cast<double>(timer.getTimeMilliseconds() / 1000.0);
-		printf("The Kernels finished in %f seconds\n", rtime);
-
 		// Once done we can copy the data from the operation
-		cl::copy(queue, d_C, begin(C), end(C));
-		
-		printf("Success!\n");
+		cl::copy(queue, d_C, begin(C), end(C));	
 	} 
 	catch (cl::Error err) 
 	{
@@ -102,4 +68,41 @@ int main(int argc, char *argv[]) {
 	    	exit(-1);
 		}
 	}
+}
+
+// We Will be calculating the equation A = B * C
+
+int main(int argc, char *argv[]) {
+	util::Timer timer;
+	double rtime;	
+
+	printf("Starting...\n");
+
+	// We will be calculating calculations of square NxN matrices
+	vector<double> A(N * N);
+	vector<double> B(N * N);
+	vector<double> C(N * N);
+
+	// Initialise Matrices with random data
+	for(int i=0; i < N * N; ++i)
+	{
+		B[i] = rand() % 100;
+		C[i] = rand() % 100;
+	}
+
+	// HOST CPU MATRIX MULTIPLY
+	timer.reset();
+	printf("Performing matrix multiply on the host...\n");
+	h_matrixmul(A, B, C);
+	rtime = static_cast<double>(timer.getTimeMilliseconds() / 1000.0);		
+	printf("Host computation complete in %f seconds\n", rtime);
+
+	// DEVICE GPU MATRIX MULTIPLY
+	timer.reset();
+	printf("Performing matrix multiply on the device gpu...\n");
+	d_matrixmul(A, B, C);
+	rtime = static_cast<double>(timer.getTimeMilliseconds() / 1000.0);
+	printf("The Kernels finished in %f seconds\n", rtime);
+	
+	printf("Success!\n");
 }
