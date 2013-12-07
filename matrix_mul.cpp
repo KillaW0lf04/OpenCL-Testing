@@ -78,7 +78,7 @@ int main(int argc, char *argv[]) {
 		timer.reset();
 
 		// Launch the specified kernel with the specified dimensions and arguments
-		mmul(EnqueueArgs(queue, NDRange(N, N)), N, d_A, d_B, d_C);
+		mmul(EnqueueArgs(queue, NDRange(N), NDRange(64)), N, d_A, d_B, d_C);
 
 		queue.finish();
 
