@@ -13,6 +13,10 @@ using namespace cl;
 void h_matrixmul(vector<double> A, vector<double> B, vector<double> C) {
 	int i,j, k;
 
+	vector<double> ACopy(A);
+	vector<double> BCopy(B);
+	vector<double> CCopy(C);
+
 	for(i=0; i<N; ++i)
 	{
 		for(j=0; j<N; ++j)
@@ -20,10 +24,10 @@ void h_matrixmul(vector<double> A, vector<double> B, vector<double> C) {
 			double temp = 0.0;
 			for(k=0; k<N; ++k)
 			{
-				temp += B[i * N + k] * C[k * N + j];
+				temp += BCopy[i * N + k] * CCopy[k * N + j];
 			}
 
-			A[i * N + j] = temp;
+			ACopy[i * N + j] = temp;
 		}
 	}
 }
@@ -37,10 +41,11 @@ void d_matrixmul(vector<double> A, vector<double> B, vector<double> C) {
 
 	try {
 		program.build();
-		auto mmul = cl::make_kernel<int, Buffer, Buffer, Buffer>(program, "matrixmul");
+		auto mmul = cl::make_kernel<int, Buffer, Buffer, Buffer, LocalSpaceArg>(program, "matrixmul");
 
 		// Use the Draconion naming convention of d_* for declaring device memory
 		Buffer d_A, d_B, d_C;
+		LocalSpaceArg CWork = Local(sizeof(float) * N);
 
 		d_A = Buffer(context, CL_MEM_WRITE_ONLY, sizeof(float) * N * N);
 		d_B = Buffer(context, begin(B), end(B), true);
@@ -49,7 +54,7 @@ void d_matrixmul(vector<double> A, vector<double> B, vector<double> C) {
 		printf("Launching Kernel!\n");
 
 		// Launch the specified kernel with the specified dimensions and arguments
-		mmul(EnqueueArgs(queue, NDRange(N), NDRange(64)), N, d_A, d_B, d_C);
+		mmul(EnqueueArgs(queue, NDRange(N), NDRange(64)), N, d_A, d_B, d_C, CWork);
 
 		queue.finish();
 
