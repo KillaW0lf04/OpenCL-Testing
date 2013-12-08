@@ -65,14 +65,14 @@ vector<float> d_matrixmul(vector<float> A, vector<float> B, vector<float> C) {
 		// Once done we can copy the data from the operation
 		copy(queue, d_A, begin(Acpy), end(Acpy));
 	} 
-	catch (cl::Error err) 
+	catch (cl::Error *err)
 	{
-		if(err.err() == CL_BUILD_PROGRAM_FAILURE) {
+		if(err->err() == CL_BUILD_PROGRAM_FAILURE) {
 			string build_error = program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(devices[0]);
 			std::cout << "Error compiling Kernel code: " << build_error << endl;
 		}
 		else {
-	    	std::cout << "OpenCL Error: " << err.what() << " returned " << err.err() << std::endl;
+	    	std::cout << "OpenCL Error: " << err->what() << " returned " << err->err() << std::endl;
 	    	std::cout << "Check cl.h for error codes." << std::endl;
 	    	exit(-1);
 		}
