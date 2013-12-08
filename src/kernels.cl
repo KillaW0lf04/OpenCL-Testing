@@ -28,5 +28,6 @@ __kernel void matrixmul(const int N, __global float *A, __global float *B, __glo
 		}
 
 		A[i * N + j] = temp;
+		barrier(CLK_LOCAL_MEM_FENCE);
 	}
 }

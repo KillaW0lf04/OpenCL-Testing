@@ -10,18 +10,18 @@ using namespace cl;
 
 #define N 1024
 
-void h_matrixmul(vector<double> A, vector<double> B, vector<double> C) {
+vector<float> h_matrixmul(vector<float> A, vector<float> B, vector<float> C) {
 	int i,j, k;
 
-	vector<double> ACopy(A);
-	vector<double> BCopy(B);
-	vector<double> CCopy(C);
+	vector<float> ACopy(A);
+	vector<float> BCopy(B);
+	vector<float> CCopy(C);
 
 	for(i=0; i<N; ++i)
 	{
 		for(j=0; j<N; ++j)
 		{
-			double temp = 0.0;
+			float temp = 0.0;
 			for(k=0; k<N; ++k)
 			{
 				temp += BCopy[i * N + k] * CCopy[k * N + j];
@@ -30,14 +30,18 @@ void h_matrixmul(vector<double> A, vector<double> B, vector<double> C) {
 			ACopy[i * N + j] = temp;
 		}
 	}
+
+	return ACopy;
 }
 
-void d_matrixmul(vector<double> A, vector<double> B, vector<double> C) {
+vector<float> d_matrixmul(vector<float> A, vector<float> B, vector<float> C) {
 	Context context(CL_DEVICE_TYPE_DEFAULT);
 
 	vector<Device> devices = context.getInfo<CL_CONTEXT_DEVICES>();
 	Program program(context, util::loadProgram("kernels.cl"));
 	CommandQueue queue(context);
+
+	vector<float> Acpy(A);
 
 	try {
 		program.build();
@@ -59,7 +63,7 @@ void d_matrixmul(vector<double> A, vector<double> B, vector<double> C) {
 		queue.finish();
 
 		// Once done we can copy the data from the operation
-		cl::copy(queue, d_C, begin(C), end(C));	
+		copy(queue, d_A, begin(Acpy), end(Acpy));
 	} 
 	catch (cl::Error err) 
 	{
@@ -73,6 +77,8 @@ void d_matrixmul(vector<double> A, vector<double> B, vector<double> C) {
 	    	exit(-1);
 		}
 	}
+
+	return Acpy;
 }
 
 // We Will be calculating the equation A = B * C
@@ -84,9 +90,9 @@ int main(int argc, char *argv[]) {
 	printf("Starting...\n");
 
 	// We will be calculating calculations of square NxN matrices
-	vector<double> A(N * N);
-	vector<double> B(N * N);
-	vector<double> C(N * N);
+	vector<float> A(N * N);
+	vector<float> B(N * N);
+	vector<float> C(N * N);
 
 	// Initialise Matrices with random data
 	for(int i=0; i < N * N; ++i)
@@ -95,19 +101,30 @@ int main(int argc, char *argv[]) {
 		C[i] = rand() % 100;
 	}
 
+	vector<float> h_result;
+	vector<float> d_result;
+
 	// HOST CPU MATRIX MULTIPLY
 	timer.reset();
 	printf("Performing matrix multiply on the host...\n");
-	h_matrixmul(A, B, C);
+	h_result = h_matrixmul(A, B, C);
 	rtime = static_cast<double>(timer.getTimeMilliseconds() / 1000.0);		
 	printf("Host computation complete in %f seconds\n", rtime);
 
 	// DEVICE GPU MATRIX MULTIPLY
 	timer.reset();
 	printf("Performing matrix multiply on the device gpu...\n");
-	d_matrixmul(A, B, C);
+	d_result = d_matrixmul(A, B, C);
 	rtime = static_cast<double>(timer.getTimeMilliseconds() / 1000.0);
 	printf("The Kernels finished in %f seconds\n", rtime);
 	
-	printf("Success!\n");
+	bool result = true;
+	for(uint i=0; i<d_result.size(); ++i) {
+		result &= h_result[i] == d_result[i];
+	}
+
+	if(result)
+		printf("Success!\n");
+	else
+		printf("Validation error\n");
 }
