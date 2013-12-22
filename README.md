@@ -22,3 +22,7 @@ You should use g++ using the C++11 specification:
 
 Make sure to change the location of the OpenCL headers as necessary for your system. In my case I have cuda-5.5 installed and nvidia-331 drivers.
 
+Third Party Code
+----------------
+
+oclReduction_kernel.cl is source code written by NVidia. The original source can be found [here](https://developer.nvidia.com/opencl)
