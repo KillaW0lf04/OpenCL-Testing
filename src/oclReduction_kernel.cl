@@ -14,9 +14,9 @@
 */
 
 // The following defines are set during runtime compilation, see reduction.cpp
-// #define T float
-// #define blockSize 128
-// #define nIsPow2 1
+ #define T float
+ #define blockSize 128
+ #define nIsPow2 1
 
 #ifndef _REDUCE_KERNEL_H_
 #define _REDUCE_KERNEL_H_
