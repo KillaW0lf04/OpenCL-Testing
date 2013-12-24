@@ -25,33 +25,48 @@ int main(int argc, char *argv[])  {
 		// Works for any array which is a power of 2
 		// If you array is not a power of 2, simply pretend it is and append 0s at the end for the reduction
 		// You can swap between levels of optimisation by choosing reduce0 - reduce6
-		auto d_reduction = cl::make_kernel<cl::Buffer, cl::Buffer, int, cl::LocalSpaceArg>(program, "reduce2");
 
-		int n = 3000;
+		// PASS: Reduction0
+		// PASS: Reduction1
+		// PASS: Reduction2
+		// PASS: Reduction3
+		// PASS: Reduction4
+		// FAIL: Reduction5
+		// FAIL: Reduction6
+		auto d_reduction = cl::make_kernel<cl::Buffer, cl::Buffer, int, cl::LocalSpaceArg>(program, "reduce4");
+
+		const int n = 300 * 200;
 		//int n = pow(2, 10);
 		//int n = 32 * 100;
 
 		// This parameter needs to be tweaked for performance
-		int workgroup_size  = 64;
-		int dim =ceil(n / (float) workgroup_size) * workgroup_size;
-
-		printf("Performing Reduction....\n");
-		printf("Workgroup Size = %d\n", workgroup_size);
-		printf("N = %d\n", n);
-		printf("DIM = %d\n", dim);
-		printf("Results size? = %d\n", dim / workgroup_size);
+		// TODO: Bug when setting workgroup size = 32
+		const int workgroup_size  = 64;
+		const int dim =ceil(n / (float) workgroup_size) * workgroup_size;
 
 		// Result size needs to be as large as the number of workgroups
 		vector<int> result(dim / workgroup_size);
 
 		vector<int> numbers(n);
 		for(int i=0; i<numbers.size(); i++)
-			numbers[i] = i;
+			numbers[i] = 1;
 		for(int i=0; i<result.size(); i++)
 			result[i] = 0;
 
+		int local_size = sizeof(int) * workgroup_size;;
+
+		printf("Performing Reduction....\n");
+		printf("Workgroup Size = %d\n", workgroup_size);
+		printf("N = %d\n", n);
+		printf("DIM = %d\n", dim);
+		printf("Results size = %.2f\n", dim / (float) workgroup_size);
+		printf("Local Memory size (per WG) = %d bytes\n", local_size);
+
+		if(local_size > 48 * 1024)
+			printf("WARNING: Local Memory size is over the expected limit!!!!!\n");
+
 		// Local Space = number of work items in a group
-		cl::LocalSpaceArg SWrk = cl::Local(sizeof(int) * numbers.size());
+		cl::LocalSpaceArg SWrk = cl::Local(local_size);
 		cl::Buffer d_numbers(context, begin(numbers), end(numbers), true);
 		cl::Buffer d_result(context, begin(result), end(result), false);
 
@@ -72,9 +87,10 @@ int main(int argc, char *argv[])  {
 		}
 		printf("\n");
 
-		n = n - 1;
-		int expected = n * (n+1);
-		expected /= 2.0;
+		//int expected = n * (n - 1);
+		//expected /= 2.0;
+
+		int expected = n;
 
 		printf("Total = %d\n", total);
 		printf("Expected =  %d\n", expected);
