@@ -45,13 +45,13 @@ int main(int argc, char *argv[])  {
 		const int dim =ceil(n / (float) workgroup_size) * workgroup_size;
 
 		// Result size needs to be as large as the number of workgroups
-		vector<int> result(dim / workgroup_size);
+		vector<float> result(dim / workgroup_size);
 
-		vector<int> numbers(n);
+		vector<float> numbers(n);
 		for(int i=0; i<numbers.size(); i++)
-			numbers[i] = 1;
+			numbers[i] = 1.0;
 		for(int i=0; i<result.size(); i++)
-			result[i] = 0;
+			result[i] = 0.0;
 
 		int local_size = sizeof(int) * workgroup_size;;
 
@@ -80,9 +80,9 @@ int main(int argc, char *argv[])  {
 		cl::copy(queue, d_result, begin(result), end(result));
 		printf("Time Taken = %ld ns\n", timer.getTimeNanoseconds());
 
-		int total = 0;
+		float total = 0;
 		for(int i=0; i<result.size();i++) {
-			printf("%d, ", result[i]);
+			printf("%.2f, ", result[i]);
 			total += result[i];
 		}
 		printf("\n");
@@ -90,10 +90,10 @@ int main(int argc, char *argv[])  {
 		//int expected = n * (n - 1);
 		//expected /= 2.0;
 
-		int expected = n;
+		float expected = n;
 
-		printf("Total = %d\n", total);
-		printf("Expected =  %d\n", expected);
+		printf("Total = %.2f\n", total);
+		printf("Expected =  %.2f\n", expected);
 
 		if(total == expected)
 			printf("Finished Successfully!\n");
