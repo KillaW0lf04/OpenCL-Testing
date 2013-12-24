@@ -25,32 +25,42 @@ int main(int argc, char *argv[])  {
 		// Works for any array which is a power of 2
 		// If you array is not a power of 2, simply pretend it is and append 0s at the end for the reduction
 		// You can swap between levels of optimisation by choosing reduce0 - reduce6
-		auto d_reduction = cl::make_kernel<cl::Buffer, cl::Buffer, int, cl::LocalSpaceArg>(program, "reduce6");
+		auto d_reduction = cl::make_kernel<cl::Buffer, cl::Buffer, int, cl::LocalSpaceArg>(program, "reduce2");
 
-		int n = pow(2, 10);
+		int n = 3000;
+		//int n = pow(2, 10);
+		//int n = 32 * 100;
 
-		vector<int> result(n);
+		// This parameter needs to be tweaked for performance
+		int workgroup_size  = 64;
+		int dim =ceil(n / (float) workgroup_size) * workgroup_size;
+
+		printf("Performing Reduction....\n");
+		printf("Workgroup Size = %d\n", workgroup_size);
+		printf("N = %d\n", n);
+		printf("DIM = %d\n", dim);
+		printf("Results size? = %d\n", dim / workgroup_size);
+
+		// Result size needs to be as large as the number of workgroups
+		vector<int> result(dim / workgroup_size);
+
 		vector<int> numbers(n);
-		for(int i=0; i<numbers.size(); i++) {
+		for(int i=0; i<numbers.size(); i++)
 			numbers[i] = i;
+		for(int i=0; i<result.size(); i++)
 			result[i] = 0;
-		}
-
-		int workgroup_size  = 8;
 
 		// Local Space = number of work items in a group
 		cl::LocalSpaceArg SWrk = cl::Local(sizeof(int) * numbers.size());
 		cl::Buffer d_numbers(context, begin(numbers), end(numbers), true);
 		cl::Buffer d_result(context, begin(result), end(result), false);
 
-		printf("Performing Reduction....\n");
-		printf("Workgroup Size = %d\n", workgroup_size);
-		printf("N = %d\n", n);
-
 		util::Timer timer;
 
+		printf ("Launching Kernel\n");
+
 		// Make sure your workgroup size is inside NDRange to prevent bugs!
-		d_reduction(cl::EnqueueArgs(queue, cl::NDRange(numbers.size(), workgroup_size)), d_numbers, d_result, numbers.size(), SWrk);
+		d_reduction(cl::EnqueueArgs(queue, cl::NDRange(dim), workgroup_size), d_numbers, d_result, numbers.size(), SWrk);
 
 		cl::copy(queue, d_result, begin(result), end(result));
 		printf("Time Taken = %ld ns\n", timer.getTimeNanoseconds());
