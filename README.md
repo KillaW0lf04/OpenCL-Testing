@@ -3,6 +3,8 @@ OpenCL-Testing
 
 Sandbox for OpenCL prototypes and development.
 
+Mainly focused at getting the reduction examples from NVidia's SDK working at optimal effeciency.
+
 Setup
 ------
 
